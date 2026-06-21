@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StuTech Exam System</title>
+
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
+
+.box{
+background:#1e293b;
+padding:25px;
+border-radius:12px;
+width:90%;
+max-width:500px;
+box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
+
+h2{color:#38bdf8;}
+
+#timer{
+color:#fbbf24;
+margin-bottom:10px;
+}
+
+.btn{
+display:block;
+width:100%;
+margin:8px 0;
+padding:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+background:#334155;
+color:white;
+transition:0.3s;
+}
+
+.btn:hover{
+background:#38bdf8;
+color:black;
+}
+
+#next{
+background:#22c55e;
+display:none;
+}
+
+#progress{
+height:8px;
+background:#334155;
+border-radius:10px;
+margin:10px 0;
+overflow:hidden;
+}
+
+#bar{
+height:100%;
+width:0%;
+background:#38bdf8;
+transition:0.3s;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box" id="quizBox">
+
+<h2>StuTech Exam 🧠</h2>
+
+<div id="timer">Time: 10</div>
+
+<div id="progress">
+<div id="bar"></div>
+</div>
+
+<p id="question"></p>
+
+<div id="options"></div>
+
+<button id="next" onclick="next()">Next ➡</button>
+
+</div>
+
+<script>
+const quiz = [
+{
+q:"What is 10 + 5?",
+options:["10","15","20","25"],
+answer:"15"
+},
+{
+q:"Capital of France?",
+options:["London","Paris","Rome","Berlin"],
+answer:"Paris"
+},
+{
+q:"H2O is?",
+options:["Oxygen","Water","Salt","Hydrogen"],
+answer:"Water"
+},
+{
+q:"2 x 9 = ?",
+options:["18","16","20","14"],
+answer:"18"
+}
+];
+
+let index=0;
+let score=0;
+let time=10;
+let timer;
+
+function startTimer(){
+time=10;
+document.getElementById("timer").innerText="Time: "+time;
+
+timer=setInterval(()=>{
+time--;
+document.getElementById("timer").innerText="Time: "+time;
+
+if(time==0){
+clearInterval(timer);
+autoNext();
+}
+},1000);
+}
+
+function load(){
+document.getElementById("next").style.display="none";
+
+let q=quiz[index];
+document.getElementById("question").innerText=q.q;
+
+let html="";
+q.options.forEach(opt=>{
+html+=`<button class="btn" onclick="check(this,'${opt}')">${opt}</button>`;
+});
+
+document.getElementById("options").innerHTML=html;
+
+let percent=(index/quiz.length)*100;
+document.getElementById("bar").style.width=percent+"%";
+
+startTimer();
+}
+
+function check(btn,ans){
+clearInterval(timer);
+
+if(ans===quiz[index].answer){
+score++;
+btn.style.background="green";
+}else{
+btn.style.background="red";
+}
+
+document.querySelectorAll(".btn").forEach(b=>b.disabled=true);
+document.getElementById("next").style.display="block";
+}
+
+function next(){
+index++;
+clearInterval(timer);
+
+if(index<quiz.length){
+load();
+}else{
+document.getElementById("quizBox").innerHTML=`
+<h2>🎉 Exam Finished</h2>
+<p>Your Score: ${score} / ${quiz.length}</p>
+<button onclick="location.reload()" class="btn">Restart</button>
+`;
+}
+}
+
+function autoNext(){
+document.getElementById("next").style.display="block";
+document.querySelectorAll(".btn").forEach(b=>b.disabled=true);
+}
+
+load();
+</script>
+
+</body>
+</html>
