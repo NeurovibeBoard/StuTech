@@ -414,3 +414,263 @@ redraw();
 
 </body>
 </html>
+<!DOCTYPE html>
+<html>
+<head>
+<title>NeuroBoard MAX</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
+
+nav{
+  display:flex;
+  justify-content:space-between;
+  padding:12px;
+  background:#020617;
+  position:sticky;
+  top:0;
+}
+
+nav a{
+  color:white;
+  margin:0 8px;
+  cursor:pointer;
+}
+
+section{
+  display:none;
+  padding:20px;
+}
+
+.active{display:block;}
+
+.card{
+  background:rgba(255,255,255,0.05);
+  padding:15px;
+  margin:10px;
+  border-radius:10px;
+}
+
+/* whiteboard */
+canvas{
+  background:white;
+  display:block;
+  margin:auto;
+  border-radius:10px;
+  touch-action:none;
+}
+
+button,input{
+  margin:5px;
+  padding:8px;
+  border-radius:8px;
+  border:none;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+  <div><b>NeuroBoard MAX</b></div>
+  <div>
+    <a onclick="show('home')">Home</a>
+    <a onclick="show('board')">Board</a>
+    <a onclick="show('study')">Study</a>
+    <a onclick="show('bot')">AI</a>
+    <a onclick="show('login')">Login</a>
+    <a onclick="show('dash')">Dashboard</a>
+  </div>
+</nav>
+
+<!-- HOME -->
+<section id="home" class="active">
+  <h1>NeuroBoard 🧠</h1>
+  <p>All-in-one learning system</p>
+</section>
+
+<!-- STUDY -->
+<section id="study">
+
+<h2>Study Materials 📚</h2>
+
+<input onkeyup="search()" id="search" placeholder="Search notes...">
+
+<div id="list">
+  <div class="card"><a href="maths.pdf" target="_blank">Maths Notes</a></div>
+  <div class="card"><a href="science.pdf" target="_blank">Science Notes</a></div>
+  <div class="card"><a href="english.pdf" target="_blank">English Notes</a></div>
+</div>
+
+</section>
+
+<!-- WHITEBOARD -->
+<section id="board">
+
+<h2>Whiteboard 🧠</h2>
+
+<button onclick="setColor('black')">Black</button>
+<button onclick="setColor('red')">Red</button>
+<button onclick="setColor('blue')">Blue</button>
+<button onclick="setEraser()">Eraser</button>
+<button onclick="undo()">Undo</button>
+<button onclick="redo()">Redo</button>
+<button onclick="clearBoard()">Clear</button>
+<button onclick="saveBoard()">Download</button>
+
+<br>
+Size:
+<input type="range" min="1" max="20" value="3" onchange="size=this.value">
+
+<canvas id="c" width="900" height="450"></canvas>
+
+</section>
+
+<!-- AI BOT -->
+<section id="bot">
+
+<h2>Neuro AI 🤖</h2>
+
+<input id="msg" placeholder="Ask anything">
+<button onclick="ask()">Ask</button>
+
+<p id="reply"></p>
+
+</section>
+
+<!-- LOGIN -->
+<section id="login">
+
+<h2>Login 🔐</h2>
+
+<input id="user" placeholder="Username"><br>
+<input id="pass" type="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+
+</section>
+
+<!-- DASHBOARD -->
+<section id="dash">
+<h2>Dashboard 📊</h2>
+<p id="welcome"></p>
+</section>
+
+<script>
+
+/* NAV */
+function show(id){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+/* SEARCH */
+function search(){
+  let q=document.getElementById("search").value.toLowerCase();
+  document.querySelectorAll("#list .card").forEach(c=>{
+    c.style.display=c.innerText.toLowerCase().includes(q)?"block":"none";
+  });
+}
+
+/* LOGIN */
+function login(){
+  let u=document.getElementById("user").value;
+  if(!u)return alert("Enter username");
+  localStorage.setItem("user",u);
+  alert("Welcome "+u);
+}
+
+/* DASH */
+function updateDash(){
+  let u=localStorage.getItem("user");
+  document.getElementById("welcome").innerText="Welcome "+u;
+}
+updateDash();
+
+/* BOT */
+function ask(){
+  let q=document.getElementById("msg").value.toLowerCase();
+  let r="I am learning...";
+
+  if(q.includes("math")) r="Open Maths PDF 📘";
+  else if(q.includes("science")) r="Open Science PDF 🔬";
+  else if(q.includes("hello")) r="Hello 👋 Student";
+
+  document.getElementById("reply").innerText=r;
+}
+
+/* WHITEBOARD */
+let c=document.getElementById("c");
+let ctx=c.getContext("2d");
+
+let draw=false;
+let color="black";
+let size=3;
+
+let strokes=[];
+let redoStack=[];
+
+c.addEventListener("pointerdown",e=>{
+  draw=true;
+  strokes.push([]);
+});
+
+c.addEventListener("pointerup",()=>draw=false);
+
+c.addEventListener("pointermove",e=>{
+  if(!draw)return;
+
+  let r=c.getBoundingClientRect();
+  let x=e.clientX-r.left;
+  let y=e.clientY-r.top;
+
+  let stroke=strokes[strokes.length-1];
+  stroke.push({x,y,color,size});
+
+  redraw();
+});
+
+function redraw(){
+  ctx.clearRect(0,0,c.width,c.height);
+
+  strokes.forEach(s=>{
+    ctx.beginPath();
+    for(let i=0;i<s.length;i++){
+      ctx.strokeStyle=s[i].color;
+      ctx.lineWidth=s[i].size;
+      if(i==0) ctx.moveTo(s[i].x,s[i].y);
+      else ctx.lineTo(s[i].x,s[i].y);
+    }
+    ctx.stroke();
+  });
+}
+
+function setColor(c1){color=c1;}
+function setEraser(){color="white";}
+function clearBoard(){strokes=[];redraw();}
+
+function undo(){
+  redoStack.push(strokes.pop());
+  redraw();
+}
+
+function redo(){
+  if(redoStack.length>0)strokes.push(redoStack.pop());
+  redraw();
+}
+
+function saveBoard(){
+  let a=document.createElement("a");
+  a.download="neuroboard.png";
+  a.href=c.toDataURL();
+  a.click();
+}
+
+</script>
+
+</body>
+</html>
