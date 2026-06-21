@@ -185,3 +185,232 @@ ul {
 
 </body>
 </html>
+<!DOCTYPE html>
+<html>
+<head>
+<title>NeuroBoard Pro+</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+
+h1 { margin: 10px; }
+
+.controls {
+  padding: 10px;
+}
+
+canvas {
+  background: white;
+  display: block;
+  margin: auto;
+  border-radius: 10px;
+  touch-action: none;
+}
+
+button, input {
+  margin: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+}
+</style>
+</head>
+
+<body>
+
+<h1>NeuroBoard PRO 🧠</h1>
+
+<div class="controls">
+
+  <button onclick="setColor('black')">Black</button>
+  <button onclick="setColor('red')">Red</button>
+  <button onclick="setColor('blue')">Blue</button>
+  <button onclick="setColor('green')">Green</button>
+
+  <button onclick="setEraser()">Eraser</button>
+
+  <button onclick="undo()">Undo</button>
+  <button onclick="redo()">Redo</button>
+
+  <button onclick="savePage()">Save Page</button>
+  <button onclick="loadPage()">Load Page</button>
+
+  <button onclick="download()">Download</button>
+
+  <br>
+
+  Pen Size:
+  <input type="range" min="1" max="25" value="3" onchange="setSize(this.value)">
+
+  <br><br>
+
+  Slide:
+  <button onclick="prevPage()">⬅</button>
+  <span id="pageNum">1</span>
+  <button onclick="nextPage()">➡</button>
+
+</div>
+
+<canvas id="board" width="1000" height="520"></canvas>
+
+<script>
+let canvas = document.getElementById("board");
+let ctx = canvas.getContext("2d");
+
+let drawing = false;
+let color = "black";
+let size = 3;
+
+let strokes = [];
+let redoStack = [];
+
+let pages = {}; // multi-page storage
+let currentPage = 1;
+
+function getPageData() {
+  return pages[currentPage] || [];
+}
+
+function setPageData(data) {
+  pages[currentPage] = data;
+}
+
+function drawGrid() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle = "#eee";
+
+  for(let x=0;x<canvas.width;x+=25){
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,canvas.height);
+    ctx.stroke();
+  }
+
+  for(let y=0;y<canvas.height;y+=25){
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(canvas.width,y);
+    ctx.stroke();
+  }
+}
+
+function redraw() {
+  drawGrid();
+
+  let data = getPageData();
+
+  for(let s of data){
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.size;
+
+    ctx.beginPath();
+    s.points.forEach((p,i)=>{
+      if(i===0) ctx.moveTo(p.x,p.y);
+      else ctx.lineTo(p.x,p.y);
+    });
+    ctx.stroke();
+  }
+}
+
+canvas.addEventListener("pointerdown",(e)=>{
+  drawing = true;
+  redoStack = [];
+
+  let stroke = {color,size,points:[]};
+  getPageData().push(stroke);
+
+  draw(e);
+});
+
+canvas.addEventListener("pointerup",()=>drawing=false);
+canvas.addEventListener("pointermove",draw);
+
+function draw(e){
+  if(!drawing) return;
+
+  let rect = canvas.getBoundingClientRect();
+  let x = e.clientX - rect.left;
+  let y = e.clientY - rect.top;
+
+  let page = getPageData();
+  let stroke = page[page.length-1];
+
+  stroke.points.push({x,y});
+  redraw();
+}
+
+/* TOOLS */
+function setColor(c){ color=c; }
+function setSize(s){ size=s; }
+
+function setEraser(){
+  color="white";
+  size=20;
+}
+
+function undo(){
+  let page = getPageData();
+  if(page.length>0){
+    redoStack.push(page.pop());
+    redraw();
+  }
+}
+
+function redo(){
+  let page = getPageData();
+  if(redoStack.length>0){
+    page.push(redoStack.pop());
+    redraw();
+  }
+}
+
+/* SAVE / LOAD */
+function savePage(){
+  localStorage.setItem("neuroboard_"+currentPage,
+    JSON.stringify(getPageData()));
+  alert("Page saved!");
+}
+
+function loadPage(){
+  let data = localStorage.getItem("neuroboard_"+currentPage);
+  if(data){
+    pages[currentPage]=JSON.parse(data);
+    redraw();
+  }
+}
+
+/* MULTI PAGE */
+function nextPage(){
+  currentPage++;
+  document.getElementById("pageNum").innerText=currentPage;
+  redraw();
+}
+
+function prevPage(){
+  if(currentPage>1){
+    currentPage--;
+    document.getElementById("pageNum").innerText=currentPage;
+    redraw();
+  }
+}
+
+/* DOWNLOAD */
+function download(){
+  let a=document.createElement("a");
+  a.download="neuroboard.png";
+  a.href=canvas.toDataURL();
+  a.click();
+}
+
+/* INIT */
+redraw();
+</script>
+
+</body>
+</html>
