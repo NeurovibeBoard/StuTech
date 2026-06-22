@@ -674,3 +674,40 @@ function saveBoard(){
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroWik</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+    <h1>NeuroWik</h1>
+    <p>AI Wikipedia Knowledge Explorer</p>
+</header>
+
+<div class="search-box">
+    <input id="searchInput" placeholder="Search anything...">
+    <button onclick="searchWiki()">Search</button>
+</div>
+
+<div class="actions">
+    <button onclick="randomArticle()">🎲 Random</button>
+</div>
+
+<div id="result" class="card" style="display:none;"></div>
+
+<div class="history">
+    <h3>Recent Searches</h3>
+    <div id="history"></div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
